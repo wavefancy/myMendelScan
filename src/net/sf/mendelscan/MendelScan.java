@@ -20,6 +20,10 @@ import java.text.*;
  * @version	1.1
  *
  * @author Daniel C. Koboldt <dkoboldt@genome.wustl.edu>
+ * 
+ * @version 2.0
+ * @author wavefancy@gmail.com
+ * 1. update to parse annotation from dbsnp build 142.
  *
  * <BR>
  * <pre>
@@ -808,7 +812,13 @@ public class MendelScan {
 
 	/**
 	 * Returns the population score based on dbSNP information and user-specified thresholds
-	 *
+     * 
+	 * ** wavefancy@gmail.com
+     * ** Update to accept annotation from dbsnp146. In this build.
+     * ** 1. gmaf were removed, CAF including GMAF info.
+     * ** 2. RSnumber were replaced as RS.
+     * 
+     * 
 	 * @param	info	HashMap of dbSNP information from ID and INFO columns
 	 * @return			String with one of several possible dbSNP statuses
 	 */
@@ -821,7 +831,31 @@ public class MendelScan {
 			{
 				status = "common";
 			}
-			else if(info.containsKey("GMAF"))
+            //wavefancy@gmail.com
+            //dbsnp 142.
+            else if (info.containsKey("CAF")) {
+                double refFre = Double.parseDouble(info.get("CAF").split(",")[0]);
+                double maf = Double.min(1-refFre, refFre);
+                if (maf >= 0.05) {
+                    status = "common";
+                }else if(maf >= 0.01){
+                    status = "uncommon";
+                }else{
+                    status = "rare";
+                }
+            }
+            //wavefancy@gmail.com
+            //dbsnp build 142. A common SNP is one that has at least one 1000Genomes 
+            //population with a minor allele of frequency >= 1% and for which 2 or 
+            //more founders contribute to that minor allele frequency
+            else if (info.containsKey("COMMON")) {
+                if (info.get("COMMON").equalsIgnoreCase("1")) {
+                    status = "common";
+                }else{
+                    status = "rare";
+                }
+            }
+            else if(info.containsKey("GMAF"))
 			{
 				Double gmaf = Double.parseDouble(info.get("GMAF"));
 				if(gmaf >= 0.05)
@@ -841,7 +875,8 @@ public class MendelScan {
 			{
 				status = "rare";
 			}
-			else if(info.containsKey("RSnumber"))
+            else if(info.containsKey("RS")) //dbsnp build 146.
+			//else if(info.containsKey("RSnumber"))
 			{
 				status = "known";
 			}
@@ -918,7 +953,8 @@ public class MendelScan {
 					int sampleReads1 = 0;
 					int sampleReads2 = 0;
 
-					if(!gt.equals(".") && !gt.equals("./."))
+					//if(!gt.equals(".") && !gt.equals("./."))
+                    if(gt.charAt(0) != '.') //validated genotype. wavefancy@gmail.com
 					{
 						// Obtain sequence depth and allele depth //
 						Integer depth = 0;
