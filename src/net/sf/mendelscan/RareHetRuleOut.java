@@ -608,8 +608,8 @@ public class RareHetRuleOut {
 
 
 
-    					}
-	    			}
+    					}   //* wavefancy@gmail.com, process one vcf content line end.
+	    			} //* wavefancy@gmail.com, process one line end.
 
 	    		}
 
