@@ -153,6 +153,8 @@ public class RareHetRuleOut {
 	    	long numSamplesControl = 0;
 	    	long numVariants = 0;
 
+            // * wavefancy@gmail.com
+            // * recode the count of each dbsnp status.
 	    	TreeMap<String, Integer> stats = new TreeMap();
 
 			// FOrmat scores for printing //
@@ -262,7 +264,7 @@ public class RareHetRuleOut {
     	    					String format = lineContents[8];
 
 
-    	    					if(!chrom.equals(currentChrom))
+    	    					if(!chrom.equals(currentChrom)) //new chrom, output last chromosome's candidate window if existed. wavefancy@gmail.com
     	    					{
     	    						if(windowMarkers > 0)
     	    						{
@@ -296,6 +298,8 @@ public class RareHetRuleOut {
     	    					}
 
     	    					// If the centromere chromosome has changed, try to get it for this chrom //
+                                // * wavefancy@gmail.com,
+                                // * no centromere info. or shift into a new chromosome, update centromere info.
     	    					if((centroChrom.length() == 0) || (centroChrom.length() > 0 && !centroChrom.equals(chrom)))
     	    					{
     	    						try {
@@ -324,6 +328,8 @@ public class RareHetRuleOut {
 		    						inCentromere = true;
 
 
+                                // * wavefancy@gmail.com
+                                // * only consider PASS sites. and not in centromere region.
     	    					if(!inCentromere && (filter.equals("PASS") || filter.equals(".")))
     	    					{
     	    						numVariants++;
@@ -413,6 +419,8 @@ public class RareHetRuleOut {
 
     		    					String markerType = "";
 	    							double pctCasesHet = 0.00;
+                                    //* wavefancy@gmail.com
+                                    //* the proportion of hetero cases.
 	    							if(casesCalled > 0)
 	    								pctCasesHet = (double) casesHet / (double) casesCalled;
 
@@ -474,7 +482,7 @@ public class RareHetRuleOut {
     		    					}
 
 
-
+                                    //***Here.
     		    					// If we have a window going, and either centromere or new chromosome was reached, end it //
     		    					if(windowMarkers > 0 && windowStop < centroStop && position > centroStart)
     		    					{
