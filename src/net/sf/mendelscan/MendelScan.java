@@ -1244,7 +1244,7 @@ public class MendelScan {
 
 		try {
 			// Parse out relevant information //
-			if(infoField.length() > 0)
+			if(infoField.length() > 0 && infoField.charAt(0) != '.')
 			{
 				String[] infoContents = infoField.split(";");
 
