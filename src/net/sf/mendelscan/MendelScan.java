@@ -289,12 +289,12 @@ public class MendelScan {
 				String line = "";
 	    		while ((line = in.readLine()) != null)
 	    		{
-	    			String[] lineContents = line.split("\t");
-
+	    			//String[] lineContents = line.split("\t");
+                    String[] lineContents = line.split("\\s+");
 	    			// Check for whitespace peds //
 
-	    			if(lineContents.length < 4)
-	    				lineContents = line.split(" ");
+	    			//if(lineContents.length < 4)
+	    			//	lineContents = line.split(" ");
 
 	    			lineCounter++;
 
@@ -907,15 +907,18 @@ public class MendelScan {
 
 	/**
 	 * Determines the numbers of cases/controls ref/het/hom for a variant
+     * 
+     * **** wavefancy@gmail.com, do not check read depth. Assume upstream masking for read depth.
 	 *
 	 * @param	genotypes	Gender, disease status, and genotype of each sample
 	 * @param	minDepth	Integer of minimum depth threshold for confident genotype calling
 	 * @return	segStatus	A string with counts of cases/controls ref/het/hom at variant position
 	 */
-	static String getSegregationStatus(HashMap<String, String> genotypes, Integer minDepth)
+	//static String getSegregationStatus(HashMap<String, String> genotypes, Integer minDepth)
+    static String getSegregationStatus(HashMap<String, String> genotypes)
 	{
 		String segStatus = "unknown";
-		String altFreqs = "";
+		//String altFreqs = "";
 
 		int casesCalled = 0;
 		int casesRef = 0;
@@ -939,57 +942,57 @@ public class MendelScan {
 					String status = sampleContents[0];
 					String gender = sampleContents[1];
 					String gt = sampleContents[2];
-					String sampleDP = sampleContents[3];
-					String sampleAD = sampleContents[4];
+					//String sampleDP = sampleContents[3];
+					//String sampleAD = sampleContents[4];
 
 					// GATK VCFs have allele depths as ref, alt. Check for that //
-					if(sampleAD.contains(","))
-					{
-						String[] sampleADcontents = sampleAD.split(",");
-						if(sampleADcontents.length > 1)
-							sampleAD = sampleADcontents[1];
-					}
-
-					int sampleReads1 = 0;
-					int sampleReads2 = 0;
+//					if(sampleAD.contains(","))
+//					{
+//						String[] sampleADcontents = sampleAD.split(",");
+//						if(sampleADcontents.length > 1)
+//							sampleAD = sampleADcontents[1];
+//					}
+//
+//					int sampleReads1 = 0;
+//					int sampleReads2 = 0;
 
 					//if(!gt.equals(".") && !gt.equals("./."))
                     if(gt.charAt(0) != '.') //validated genotype. wavefancy@gmail.com
 					{
 						// Obtain sequence depth and allele depth //
-						Integer depth = 0;
+//						Integer depth = 0;
 
-						try {
-							if(sampleContents[3].length() > 0 && !sampleContents[3].equals("."))
-							{
-								depth = Integer.parseInt(sampleContents[3]);
-							}
-
-							String[] adContents = sampleAD.split(",");
-							for(int aCounter = 0; aCounter < adContents.length; aCounter++)
-							{
-								int thisReads2 = Integer.parseInt(adContents[aCounter]);
-								if(thisReads2 > sampleReads2)
-									sampleReads2 = thisReads2;
-							}
-						}
-						catch (Exception e)
-						{
-
-						}
-
-						double sampleVAF = 0.00;
-
-						if(depth > 0)
-						{
-							sampleReads1 = depth - sampleReads2;
-							sampleVAF = (double) sampleReads2 / (double) depth;
-							altFreqs += "\t" + dfFreq.format(sampleVAF);
-						}
-						else
-						{
-							altFreqs += "\tNA";
-						}
+//						try {
+//							if(sampleContents[3].length() > 0 && !sampleContents[3].equals("."))
+//							{
+//								depth = Integer.parseInt(sampleContents[3]);
+//							}
+//
+//							String[] adContents = sampleAD.split(",");
+//							for(int aCounter = 0; aCounter < adContents.length; aCounter++)
+//							{
+//								int thisReads2 = Integer.parseInt(adContents[aCounter]);
+//								if(thisReads2 > sampleReads2)
+//									sampleReads2 = thisReads2;
+//							}
+//						}
+//						catch (Exception e)
+//						{
+//
+//						}
+//
+//						double sampleVAF = 0.00;
+//
+//						if(depth > 0)
+//						{
+//							sampleReads1 = depth - sampleReads2;
+//							sampleVAF = (double) sampleReads2 / (double) depth;
+//							altFreqs += "\t" + dfFreq.format(sampleVAF);
+//						}
+//						else
+//						{
+//							altFreqs += "\tNA";
+//						}
 
 
 						// Check to see if this variant matches the expectation //
@@ -1001,43 +1004,40 @@ public class MendelScan {
 							{
 								casesHet++;
 							}
-							else
-							{
-								if(MendelScan.isHomozygous(gt))
-								{
-									casesHom++;
-								}
-								else if(MendelScan.isReference(gt))
-								{
-									// Determine if we have sufficient depth and VAF is less than 5% //
-									if(depth >= minDepth)
-									{
-										// If SampleVAF is appreciable, don't count as ref //
-										if(sampleVAF >= 0.05)
-										{
-											// Just don't count it, or change it to het? //
-											if(sampleVAF >= 0.10)
-											{
-												casesHet++;
-											}
-											else
-											{
-												casesMissing++;
-											}
-										}
-										else
-										{
-											casesRef++;
-										}
-									}
-									else
-									{
-										casesMissing++;
-									}
-								}
+                            else if(MendelScan.isHomozygous(gt))
+                            {
+                                casesHom++;
+                            }
+                            else if(MendelScan.isReference(gt))
+                            {
+                                casesRef++;
+                                // Determine if we have sufficient depth and VAF is less than 5% //
+//									if(depth >= minDepth)
+//									{
+//										// If SampleVAF is appreciable, don't count as ref //
+//										if(sampleVAF >= 0.05)
+//										{
+//											// Just don't count it, or change it to het? //
+//											if(sampleVAF >= 0.10)
+//											{
+//												casesHet++;
+//											}
+//											else
+//											{
+//												casesMissing++;
+//											}
+//										}
+//										else
+//										{
+//											casesRef++;
+//										}
+//									}
+//									else
+//									{
+//										casesMissing++;
+//									}
+                            }
 
-
-							}
 						}
 						else
 						{
@@ -1053,12 +1053,11 @@ public class MendelScan {
 							}
 							else if(MendelScan.isReference(gt))
 							{
-								if(depth >= minDepth)
+//								if(depth >= minDepth)
 									controlsRef++;
-								else
-									controlsMissing++;
+//								else
+//									controlsMissing++;
 							}
-
 						}
 
 					}
@@ -1073,7 +1072,7 @@ public class MendelScan {
 							controlsMissing++;
 						}
 						// Genotype was filtered, so altfreqs not calculated //
-						altFreqs += "\tNA";
+						//altFreqs += "\tNA";
 					}
 				}
 				catch(Exception e)
@@ -1196,8 +1195,8 @@ public class MendelScan {
 	    		while ((line = in.readLine()) != null)
 	    		{
 	    			lineCounter++;
-	    			String[] lineContents = line.split("\t");
-
+	    			//String[] lineContents = line.split("\t");
+                    String[] lineContents = line.split("\\s+");
 	    			try {
 	    				if(lineContents.length >= 3)
 	    				{
