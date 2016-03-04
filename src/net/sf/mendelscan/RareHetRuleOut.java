@@ -41,7 +41,8 @@ public class RareHetRuleOut {
 		String outWindows = null;
 		String centromereFile = null;
 		String inheritanceModel = "dominant";
-		Integer minDepth = 20;
+		//Integer minDepth = 20;
+        Integer minDepth = 4;  //** wavefancy@gmail.com: lower the depth threshold.
 
 		// Print usage if -h or --help invoked //
 		if(params.containsKey("help") || params.containsKey("h"))
@@ -106,7 +107,8 @@ public class RareHetRuleOut {
 		    		for (String sample : pedInfo.keySet())
 		    		{
 		    			String pedLine = pedInfo.get(sample);
-		    			String[] pedLineContents = pedLine.split("\t");
+		    			//String[] pedLineContents = pedLine.split("\t");
+                        String[] pedLineContents = pedLine.split("\\s+");
 		    			// Family, PaternalID, MaternalID, Sex, Status //
 		    			String familyID = pedLineContents[0];
 		    			String sex = pedLineContents[3];
@@ -196,11 +198,20 @@ public class RareHetRuleOut {
 	    		Integer windowStop = 0;
 	    		int windowMarkers = 0;
 
+                //output title for candiate rare lines.
+                System.out.println("CHR\tPOS\tRS\tdbsnpStatus\tType\tCaseHetroPercent\tCaseCalled\tCaseRef\tCaseHetro\tCaseHomo\tCaseMissed"
+                +"\tCtrlCalled\tCtrlRef\tCtrlHeter\tCtrlHomo\tCtrlMissed"
+                );
+                
 	    		// Parse the infile line by line //
-
 	    		while ((line = in.readLine()) != null)
 	    		{
-	    			String[] lineContents = line.split("\t");
+                    if (line.trim().length() == 0) {
+                        continue;
+                    }
+	    			//String[] lineContents = line.split("\t");
+                    //** wavefancy@gmail.com avoid multiple white spaces.
+                    String[] lineContents = line.split("\\s+");
 
 	    			if(line.startsWith("#"))
 	    			{
@@ -263,7 +274,6 @@ public class RareHetRuleOut {
     	    					String info = lineContents[7];
     	    					String format = lineContents[8];
 
-
     	    					if(!chrom.equals(currentChrom)) //new chrom, output last chromosome's candidate window if existed. wavefancy@gmail.com
     	    					{
     	    						if(windowMarkers > 0)
@@ -306,7 +316,8 @@ public class RareHetRuleOut {
         	    						// Try to get centromere coordinates //
     		    						if(centromeresByChrom.containsKey(chrom))
     		    						{
-    		    							String[] centroContents = centromeresByChrom.get(chrom).split("\t");
+    		    							//String[] centroContents = centromeresByChrom.get(chrom).split("\t");
+                                            String[] centroContents = centromeresByChrom.get(chrom).split("\\s+");
     		    							centroStart = Integer.parseInt(centroContents[0]);
     		    							centroStop = Integer.parseInt(centroContents[1]);
     		    							centroChrom = chrom;
@@ -384,6 +395,7 @@ public class RareHetRuleOut {
     		    					// Parse out values from info field, which should include dbSNP values //
 
     		    					HashMap<String, String> infoValues = MendelScan.parseInfoField(info);
+                                    //System.err.println(infoValues);
 
     		    					// Save dbSNP ID if necessary //
     		    					if(!id.equals("."))
@@ -405,7 +417,8 @@ public class RareHetRuleOut {
     		    					}
 
     		    					// Get Segregation Status //
-    		    					String segStatus = MendelScan.getSegregationStatus(genotypesBySample, minDepth);
+    		    					//String segStatus = MendelScan.getSegregationStatus(genotypesBySample, minDepth);
+                                    String segStatus = MendelScan.getSegregationStatus(genotypesBySample);
     		    					String[] segContents = segStatus.split("\t");
     		    					int casesCalled = Integer.parseInt(segContents[0]);
     		    					int casesRef = Integer.parseInt(segContents[1]);
@@ -431,7 +444,9 @@ public class RareHetRuleOut {
 //    		    						System.err.println(segStatus + "\tRuleOut");
     		    					}
     		    					// Part 2: Rare Heterozygote //
-    		    					else if(!dbsnpStatus.equals("common") && !dbsnpStatus.equals("uncommon"))
+    		    					//else if(!dbsnpStatus.equals("common") && !dbsnpStatus.equals("uncommon"))
+                                    //*** wavefancy@gmail.com only consider rare variantes [not in status 'common' or 'uncommon'].
+                                    else if(! (dbsnpStatus.equals("common") || dbsnpStatus.equals("uncommon")))
     		    					{
     		    						// If rare variant not found in controls... //
     		    						if(controlsVariant == 0 && casesCalled > 0 && casesHet > 0)
@@ -513,7 +528,9 @@ public class RareHetRuleOut {
 
     			    						// Reset window //
     			    						windowMarkers = 0;
-    			    						windowChrom = "";
+                                            //*** wavefancy@gmail.com
+                                            //*** bug fix: because we are in centromere, do not reset windowChrom paramters.
+    			    						//windowChrom = "";
     			    						windowStop = 0;
     			    						// Set next position as earliest possible window start //
     			    						windowStart = centroStop + 1;
@@ -525,6 +542,7 @@ public class RareHetRuleOut {
 
     		    					if(markerType.equals("RuleOut"))
     		    					{
+                                       // System.err.println("RuleOut - nwindowStart: " + windowStart);
     		    						// If we had a region going, terminate it here //
     		    						if(windowMarkers > 0)
     		    						{
@@ -572,6 +590,8 @@ public class RareHetRuleOut {
     		    						}
     		    						else
     		    						{
+//                                            System.err.println("1nwindowStart: " + windowStart);
+//                                            System.err.println(windowChrom + "+ windowChrom-chrom + " + chrom);
     		    							// If we don't have a start position, set it now //
     		    							if(!windowChrom.equals(chrom))
     		    								windowStart = 1;
@@ -582,6 +602,7 @@ public class RareHetRuleOut {
 
     		    							windowStop = position;
     		    							windowMarkers = 1;
+//                                            System.err.println("2nwindowStart: " + windowStart);
     		    						}
     		    					}
     		    					else
